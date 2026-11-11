@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Physiklabor – Kernreaktor: Kettenreaktion kontrollieren</title>
+<style>
+:root{
+  --paper:#f6f5ef; --panel:#fffefa; --text:#203d36; --text2:#586b62; --line:#d5ded4;
+  --green:#176958; --soft:#eaf3ee; --focus:#aa481f; --blue:#396f8b;
+  --hot:#aa481f; --cold:#396f8b; --steam:#9dbbb0; --coolw:#8a9aa6; --concrete:#8b9089;
+  --warn:#b7791f; --crit:#aa481f; --dmg:#7a1f14;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--text);font:16.5px/1.6 Arial,Helvetica,sans-serif}
+a{color:var(--green)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.site{background:#fff;border-bottom:1px solid var(--line)}
+.site .in{max-width:1180px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:12px}
+.site svg{flex:none}
+.brand{font-weight:bold;color:var(--green)}
+.brand span{font-weight:normal;color:var(--text2)}
+.claim{margin-left:auto;color:var(--text2);font-size:14px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px 40px}
+.kicker{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin:30px 0 4px}
+h1{font:normal 44px/1.15 Georgia,serif;margin:0 0 12px;max-width:21em}
+h2{font:normal 27px/1.25 Georgia,serif;margin:0 0 6px}
+h3{font-size:16.5px;margin:0 0 6px}
+.intro p{max-width:46em;margin:0 0 8px}
+.modelnote{display:inline-block;font-size:14px;color:var(--text2);border:1px solid var(--line);border-radius:4px;padding:3px 10px;background:var(--panel)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);margin:24px 0 0;border:1px solid var(--line);border-bottom:none;background:var(--panel)}
+.tab{appearance:none;border:0;border-right:1px solid var(--line);border-bottom:3px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;padding:10px 14px;min-height:60px;display:flex;gap:12px;align-items:center;cursor:pointer;min-width:0}
+.tab:last-child{border-right:0}
+.tab .no{font:normal 24px Georgia,serif;color:var(--text2)}
+.tab small{display:block;font-size:13px;color:var(--text2);line-height:1.3}
+.tab b{display:block;font-weight:bold;line-height:1.3}
+.tab[aria-selected="true"]{background:var(--soft);border-bottom-color:var(--green)}
+.tab[aria-selected="true"] .no{color:var(--green)}
+.panel{background:var(--panel);border:1px solid var(--line);padding:22px 22px 26px}
+.task{max-width:50em;margin:0 0 14px;color:var(--text)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:0 0 10px}
+.seg{display:inline-flex;border:1px solid var(--green);border-radius:6px;overflow:hidden}
+.seg button{appearance:none;border:0;background:var(--panel);color:var(--green);font:inherit;font-size:15px;padding:0 14px;min-height:44px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--green);color:#fff}
+.check{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:15px}
+.check input{width:20px;height:20px;accent-color:var(--green)}
+.markstate{font-size:14px;color:var(--text2);min-height:1.6em}
+.sceneScroll{border:1px solid var(--line);background:#fbfaf5;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#scene{display:block;width:100%;height:auto;min-width:780px;margin:0 auto}
+#scene.core{min-width:0;max-width:480px}
+#scene.core .plantOnly{display:none}
+#scene text{font-family:Arial,Helvetica,sans-serif;fill:var(--text)}
+#scene .lbl{font-size:15px}
+#scene .lbl2{font-size:13px;fill:var(--text2)}
+#scene .val{font-size:16px;font-weight:bold}
+#scene .lead{stroke:#7d8c84;stroke-width:1}
+.legend{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:14px;color:var(--text2);margin:8px 0 0;padding:0;list-style:none}
+.legend li{display:flex;align-items:center;gap:6px}
+.legend svg{flex:none}
+.console{position:sticky;bottom:0;z-index:5;background:#fff;border:1px solid var(--green);border-radius:6px 6px 0 0;margin:12px 0 0;padding:10px 14px 12px}
+.console h3{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin:0 0 4px;font-weight:normal}
+.crow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.rodctl{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;flex:1 1 300px;min-width:0}
+.rodctl label{font-weight:bold;flex:1 0 100%;line-height:1.3}
+.rodctl input[type=range]{flex:1;min-width:90px;height:44px;accent-color:var(--green)}
+.rodctl output{flex:none;min-width:3.6em;text-align:right;font-weight:bold;font-variant-numeric:tabular-nums}
+.btn{appearance:none;font:inherit;min-height:44px;padding:0 14px;border-radius:6px;border:1px solid var(--green);background:var(--panel);color:var(--green);cursor:pointer}
+.btn.primary{background:var(--green);color:#fff}
+.btn.alert{border-color:var(--focus);color:var(--focus)}
+.btn.alert.primary{background:var(--focus);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sq{width:44px;flex:none;padding:0;font-size:20px;line-height:1}
+.pread{flex:0 0 17.5em;max-width:100%;font-variant-numeric:tabular-nums;border-left:1px solid var(--line);padding-left:14px}
+.pread b{font-size:22px}
+.pread span{display:block;font-size:13px;color:var(--text2);line-height:1.2;white-space:nowrap}
+.pread.out b{color:var(--focus)}
+.modeRow{margin-top:8px}
+.steps{display:flex;list-style:none;margin:8px 0 0;padding:0;gap:4px;font-size:14px}
+.steps li{flex:1;border:1px solid var(--line);padding:6px 8px;text-align:center;color:var(--text2);background:var(--panel);line-height:1.25;min-width:0}
+.steps li.on{color:#fff;font-weight:bold;border-color:transparent}
+.steps li.s0.on{background:var(--green)} .steps li.s1.on{background:var(--warn)}
+.steps li.s2.on{background:var(--crit)} .steps li.s3.on{background:var(--dmg)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:22px;margin-top:22px}
+.grid2>*{min-width:0}
+.gauges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.g{border:1px solid var(--line);padding:9px 12px;background:#fff}
+.g span{display:block;font-size:14px;color:var(--text2);line-height:1.3}
+.g b{font-size:25px;font-variant-numeric:tabular-nums;font-weight:bold}
+.g i{font-style:normal;font-size:14px;color:var(--text2)}
+.note{font-size:14px;color:var(--text2);margin:8px 0 0}
+canvas{display:block;width:100%;height:230px;background:#fff;border:1px solid var(--line)}
+.sub{margin-top:26px;border-top:1px solid var(--line);padding-top:18px}
+table{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:right}
+th{background:var(--soft);font-weight:normal;color:var(--text);line-height:1.3}
+.tscroll{overflow-x:auto}
+.abc{margin:0;padding:0;list-style:none;max-width:52em}
+.abc li{display:flex;gap:12px;margin:0 0 8px}
+.abc li b{flex:none;font:normal 20px Georgia,serif;color:var(--green);width:1.2em}
+.log{margin:8px 0 0;padding-left:0;list-style:none;font-size:15px;font-variant-numeric:tabular-nums}
+.log li{display:flex;gap:10px;border-bottom:1px solid var(--line);padding:4px 0}
+.log li time{flex:none;width:4.2em;color:var(--text2);text-align:right}
+.bilanz{border-left:3px solid var(--green);padding:6px 12px;background:var(--soft);margin:10px 0 0}
+details{margin:14px 0 0;max-width:52em}
+summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
+summary::before{content:"▸";margin-right:8px}
+details[open] summary::before{content:"▾"}
+summary::-webkit-details-marker{display:none}
+.src li{margin-bottom:8px}
+footer{max-width:1180px;margin:0 auto;padding:0 28px 40px;color:var(--text2);font-size:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+[hidden]{display:none!important}
+@media (max-width:900px){
+  .grid2{grid-template-columns:1fr}
+  .claim{display:none}
+  .tabs{grid-template-columns:repeat(2,1fr)}
+  .tab:nth-child(2){border-right:0}
+}
+@media (max-height:520px){.console{position:static}}
+@media (max-width:600px){
+  h1{font-size:31px} h2{font-size:25px}
+  .site .in{padding:10px 16px} .wrap{padding:0 16px 30px} footer{padding:0 16px 30px}
+  .panel{padding:16px 12px 20px}
+  .tab{padding:8px 10px;gap:8px} .tab .no{font-size:20px}
+  .pread{border-left:0;padding-left:0;flex-basis:100%}
+  .steps{font-size:13.5px;flex-wrap:wrap} .steps li{flex:1 1 45%;padding:5px 3px}
+  .console{position:static;border-radius:6px}
+  .g b{font-size:22px}
+}
+@media print{
+  .site,.tabs,.console,.toolbar,footer .btn,.sceneScroll,.legend,canvas{display:none!important}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+<header class="site"><div class="in">
+  <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><g fill="none" stroke="#176958" stroke-width="2.4" stroke-linecap="round"><path d="M3 17h4"/><ellipse cx="11" cy="17" rx="4" ry="9"/><ellipse cx="17" cy="17" rx="4" ry="9"/><ellipse cx="23" cy="17" rx="4" ry="9"/><path d="M27 17h4"/></g></svg>
+  <div class="brand">Physiklabor <span>/ Kernreaktor</span></div>
+  <div class="claim">Entdecken. Verändern. Verstehen.</div>
+</div></header>
+
+<main class="wrap">
+  <section class="intro">
+    <p class="kicker">Experimentelle Lernumgebung · Physik Klasse 10</p>
+    <h1>Wie lässt sich die Kettenreaktion in einem Kernreaktor kontrollieren?</h1>
+    <p>Untersuche einen Druckwasserreaktor im Modell: Verändere die Stellung der Steuerstäbe, beobachte den Reaktorkern und verfolge, was in der ganzen Anlage geschieht.</p>
+    <p class="modelnote">Vereinfachtes physikalisches Modell – alle Zahlen sind modellhafte Werte.</p>
+  </section>
+
+  <div class="tabs" role="tablist" aria-label="Lernbereiche">
+    <button class="tab" role="tab" id="tab-0" aria-selected="true" aria-controls="panel-sim"><span class="no">01</span><span><small>Lernmodus</small><b>Beobachten</b></span></button>
+    <button class="tab" role="tab" id="tab-1" aria-selected="false" aria-controls="panel-sim" tabindex="-1"><span class="no">02</span><span><small>Schnellmodus</small><b>Unter Kontrolle halten</b></span></button>
+    <button class="tab" role="tab" id="tab-2" aria-selected="false" aria-controls="panel-sim" tabindex="-1"><span class="no">03</span><span><small>Störfall</small><b>Störung der Kühlung</b></span></button>
+    <button class="tab" role="tab" id="tab-3" aria-selected="false" aria-controls="panel-info" tabindex="-1"><span class="no">04</span><span><small>Grundlage</small><b>Quellen und Modell</b></span></button>
+  </div>
+
+  <section class="panel" id="panel-sim" role="tabpanel" aria-labelledby="tab-0" tabindex="0">
+    <h2 id="modeTitle"></h2>
+    <p class="task" id="modeTask"></p>
+
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="Ansicht">
+        <button type="button" id="viewPlant" aria-pressed="true">Gesamte Anlage</button>
+        <button type="button" id="viewCore" aria-pressed="false">Reaktorkern (Lupe)</button>
+      </div>
+      <label class="check"><input type="checkbox" id="markChk"> Ein Neutron markieren</label>
+      <span class="markstate" id="markState"></span>
+    </div>
+
+    <div class="sceneScroll">
+    <svg id="scene" viewBox="0 0 1280 700" role="img" aria-labelledby="sceneT sceneD">
+      <title id="sceneT">Schematischer Querschnitt eines Druckwasserreaktors</title>
+      <desc id="sceneD">Im Containment stehen Reaktordruckbehälter mit Reaktorkern und Steuerstäben, Druckhalter, Dampferzeuger und Hauptkühlmittelpumpe. Außerhalb liegen Turbine, Generator, Kondensator und Kühlturm.</desc>
+      <defs>
+        <clipPath id="vClip"><path d="M200,250 A120,38 0 0 1 440,250 V620 A120,38 0 0 1 200,620 Z"/></clipPath>
+        <linearGradient id="waterGrad" gradientUnits="userSpaceOnUse" x1="0" y1="425" x2="0" y2="600"><stop id="wg0" offset="0" stop-color="#e9d9cf"/><stop id="wg1" offset="1" stop-color="#d3e2ea"/></linearGradient>
+        <linearGradient id="tubeGrad" gradientUnits="userSpaceOnUse" x1="540" y1="0" x2="630" y2="0"><stop id="tg0" offset="0.2" stop-color="#aa481f"/><stop id="tg1" offset="0.8" stop-color="#396f8b"/></linearGradient>
+      </defs>
+      <line x1="0" y1="668" x2="1280" y2="668" stroke="#b9c2b8" stroke-width="2"/>
+      <!-- Containment -->
+      <path id="contain" d="M30,668 V270 A350,235 0 0 1 730,270 V668" fill="#f0eee4" stroke="#8b9089" stroke-width="10"/>
+      <text class="lbl" x="380" y="80" text-anchor="middle">Containment (Sicherheitsbehälter)</text>
+      <g id="radG"></g>
+
+      <!-- Dampferzeuger -->
+      <path d="M520,372 V175 A65,65 0 0 1 650,175 V372 Z" fill="#eef3ee" stroke="#5e6b66" stroke-width="4"/>
+      <path d="M522,205 H648 V370 H522 Z" fill="#cfe4da"/>
+      <g id="sgBub"></g>
+      <path id="chHot" d="M520,372 H585 V430 A65,35 0 0 1 520,395 Z" fill="#aa481f"/>
+      <path id="chCold" d="M585,372 H650 V395 A65,35 0 0 1 585,430 Z" fill="#396f8b"/>
+      <path d="M520,372 H650 V395 A65,35 0 0 1 520,395 Z" fill="none" stroke="#5e6b66" stroke-width="4"/>
+      <line x1="585" y1="372" x2="585" y2="430" stroke="#5e6b66" stroke-width="3"/>
+      <g fill="none" stroke="url(#tubeGrad)" stroke-width="6">
+        <path d="M540,372 V235 A45,45 0 0 1 630,235 V372"/>
+        <path d="M553,372 V250 A32,32 0 0 1 617,250 V372"/>
+        <path d="M566,372 V262 A19,19 0 0 1 604,262 V372"/>
+      </g>
+      <text class="lbl" transform="translate(680,235) rotate(-90)" text-anchor="middle">Dampferzeuger</text>
+
+      <!-- Druckhalter -->
+      <line x1="477" y1="345" x2="477" y2="385" stroke="#aa481f" stroke-width="4" id="przLine"/>
+      <rect x="463" y="262" width="28" height="88" rx="14" fill="#f1e6df" stroke="#5e6b66" stroke-width="3"/>
+      <rect x="465" y="305" width="24" height="43" rx="11" fill="#d9a48c" id="przWater"/>
+      <text class="lbl2 plantOnly" x="477" y="254" text-anchor="middle">Druckhalter</text>
+
+      <g id="pipes"></g>
+
+      <!-- Reaktordruckbehälter -->
+      <path d="M200,250 A120,38 0 0 1 440,250 V620 A120,38 0 0 1 200,620 Z" fill="#f4f1ea"/>
+      <g clip-path="url(#vClip)">
+        <rect id="waterTop" x="200" y="200" width="240" height="226" fill="#e9d9cf"/>
+        <rect x="200" y="425" width="240" height="175" fill="url(#waterGrad)"/>
+        <rect id="waterBot" x="200" y="599" width="240" height="70" fill="#d3e2ea"/>
+        <rect id="steamCover" x="200" y="200" width="240" height="0" fill="#f6f3ec"/>
+        <g id="vBub"></g>
+        <rect x="222" y="423" width="196" height="179" fill="none" stroke="#7d8c84" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <g id="fuelG"></g>
+        <ellipse id="melt" cx="320" cy="648" rx="0" ry="0" fill="#c2421c"/>
+        <g id="rodG"></g>
+        <g id="fxG"></g>
+        <g id="nG"></g>
+        <circle id="markRing" r="7" fill="none" stroke="#203d36" stroke-width="1.6" visibility="hidden"/>
+      </g>
+      <path d="M200,250 A120,38 0 0 1 440,250 V620 A120,38 0 0 1 200,620 Z" fill="none" stroke="#5e6b66" stroke-width="6"/>
+      <g id="driveG"></g>
+      <g class="lbl">
+        <text x="186" y="300" text-anchor="end">Steuerstäbe</text><line class="lead" x1="190" y1="296" x2="264" y2="322"/>
+        <text x="186" y="392" text-anchor="end">Reaktordruck-</text><text x="186" y="411" text-anchor="end">behälter</text><line class="lead" x1="190" y1="398" x2="200" y2="398"/>
+        <text x="186" y="498" text-anchor="end">Reaktorkern mit</text><text x="186" y="517" text-anchor="end">Brennelementen</text><line class="lead" x1="190" y1="504" x2="223" y2="504"/>
+      </g>
+      <text class="lbl plantOnly" x="531" y="492" text-anchor="middle">Primärkreislauf</text>
+      <text class="lbl2 plantOnly" x="531" y="511" text-anchor="middle">Wasser unter hohem Druck</text>
+      <text class="val plantOnly" id="tHot" x="480" y="413" text-anchor="middle">316 °C</text>
+      <text class="val plantOnly" id="tCold" x="478" y="602" text-anchor="middle">288 °C</text>
+      <text class="lbl" x="531" y="656" text-anchor="middle">Hauptkühlmittelpumpe</text>
+
+      <!-- Turbine, Generator -->
+      <polygon points="815,205 945,175 945,285 815,255" fill="#e8ece6" stroke="#5e6b66" stroke-width="4"/>
+      <line x1="822" y1="230" x2="1000" y2="230" stroke="#5e6b66" stroke-width="5"/>
+      <g id="bladeG"></g>
+      <text class="lbl" x="880" y="160" text-anchor="middle">Turbine</text>
+      <rect x="1000" y="188" width="100" height="84" rx="8" fill="#e8ece6" stroke="#5e6b66" stroke-width="4"/>
+      <circle cx="1050" cy="230" r="27" fill="#fff" stroke="#5e6b66" stroke-width="2"/>
+      <g id="genRot"><line x1="1026" y1="230" x2="1074" y2="230" stroke="#176958" stroke-width="5"/><line x1="1050" y1="206" x2="1050" y2="254" stroke="#176958" stroke-width="5"/></g>
+      <text class="lbl" x="1050" y="178" text-anchor="middle">Generator</text>
+      <text class="lbl2" x="1050" y="296" text-anchor="middle">elektrische Leistung</text>
+      <text class="val" id="genOut" x="1050" y="318" text-anchor="middle">100 %</text>
+      <g fill="none" stroke="#5e6b66" stroke-width="2"><path d="M1190,250 L1201,150 L1212,250 M1180,172 H1222 M1185,196 H1217"/><path d="M1100,214 Q1140,200 1180,172 M1100,226 Q1145,215 1185,196" stroke-width="1.4"/></g>
+      <text class="lbl" x="858" y="88">Sekundärkreislauf</text>
+      <text class="lbl2" x="700" y="85" text-anchor="middle">Dampf</text>
+
+      <!-- Kondensator -->
+      <rect x="830" y="345" width="130" height="90" rx="6" fill="#e3ede8" stroke="#5e6b66" stroke-width="4"/>
+      <path d="M958,372 H850 V391 H940 V410 H958" fill="none" stroke="#8a9aa6" stroke-width="7"/>
+      <text class="lbl" x="886" y="462">Kondensator</text>
+      <text class="lbl" x="812" y="556" text-anchor="middle">Speisewasserpumpe</text>
+
+      <!-- Kühlturm -->
+      <g id="plumeG"></g>
+      <path d="M1125,668 Q1162,520 1150,400 H1236 Q1224,520 1261,668 Z" fill="#e9e8e0" stroke="#8b9089" stroke-width="4"/>
+      <text class="lbl" x="1193" y="560" text-anchor="middle">Kühlturm</text>
+      <text class="lbl2" x="1030" y="600" text-anchor="end">Kühlkreislauf</text>
+      <g id="pumpG"></g>
+    </svg>
+    </div>
+
+    <ul class="legend" aria-label="Legende">
+      <li><svg width="16" height="16"><circle cx="8" cy="8" r="5" fill="#8a7a2e"/></svg>U-235-Kern</li>
+      <li><svg width="16" height="16"><circle cx="8" cy="8" r="4" fill="#e0701c"/></svg>schnelles Neutron</li>
+      <li><svg width="16" height="16"><circle cx="8" cy="8" r="4" fill="#1f4f7a"/></svg>langsames Neutron</li>
+      <li><svg width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="#e0a01c" stroke-width="2.5"/></svg>Kernspaltung</li>
+      <li><svg width="16" height="16"><rect x="5" y="1" width="6" height="14" fill="#3f4a48"/></svg>Steuerstab</li>
+      <li><svg width="26" height="16"><line x1="0" y1="5" x2="26" y2="5" stroke="#aa481f" stroke-width="4"/><line x1="0" y1="12" x2="26" y2="12" stroke="#396f8b" stroke-width="4"/></svg>Primärkreislauf (heiß / kühler)</li>
+      <li><svg width="26" height="16"><line x1="0" y1="5" x2="26" y2="5" stroke="#9dbbb0" stroke-width="4" stroke-dasharray="3 3"/><line x1="0" y1="12" x2="26" y2="12" stroke="#176958" stroke-width="4"/></svg>Sekundärkreislauf (Dampf / Wasser)</li>
+      <li><svg width="26" height="16"><line x1="0" y1="8" x2="26" y2="8" stroke="#8a9aa6" stroke-width="4"/></svg>Kühlkreislauf</li>
+      <li id="legRad" hidden><svg width="16" height="16"><circle cx="8" cy="8" r="3" fill="#6b3f7a"/></svg>freigesetzte radioaktive Stoffe (schematisch)</li>
+    </ul>
+
+    <div class="console" role="group" aria-label="Kontrollpult">
+      <h3>Kontrollpult</h3>
+      <div class="crow">
+        <div class="rodctl">
+          <label for="rod">Eintauchtiefe der Steuerstäbe</label>
+          <button type="button" class="btn sq" id="rodMinus" aria-label="Steuerstäbe 1 % herausziehen">−</button>
+          <input type="range" id="rod" min="0" max="100" step="1" value="50" aria-describedby="rodHint">
+          <button type="button" class="btn sq" id="rodPlus" aria-label="Steuerstäbe 1 % einfahren">+</button>
+          <output id="rodOut" for="rod">50 %</output>
+        </div>
+        <div class="pread" id="pread"><b id="pBig">100 %</b><span id="pBand">Reaktorleistung</span></div>
+        <button type="button" class="btn" id="pauseBtn">Pause</button>
+        <button type="button" class="btn" id="resetBtn">Zurücksetzen</button>
+      </div>
+      <span id="rodHint" hidden>0 % bedeutet ganz herausgezogen, 100 % ganz eingefahren.</span>
+      <div class="crow modeRow" id="rowRun" hidden>
+        <button type="button" class="btn primary" id="runBtn">Durchgang starten (40 s)</button>
+        <span id="runInfo" class="markstate"></span>
+      </div>
+      <div class="modeRow" id="rowAcc" hidden>
+        <div class="crow">
+          <button type="button" class="btn alert" id="failBtn">Störung auslösen: Hauptkühlmittelpumpe fällt aus</button>
+          <button type="button" class="btn alert primary" id="scramBtn">Reaktorschnellabschaltung</button>
+          <button type="button" class="btn" id="emBtn" aria-pressed="false">Notkühlung einschalten</button>
+        </div>
+        <ol class="steps" id="steps" aria-label="Zustand der Anlage">
+          <li class="s0 on">Normalbetrieb</li><li class="s1">Warnung</li><li class="s2">Kritischer Zustand</li><li class="s3">Kernschädigung</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div>
+        <h3>Messanzeigen</h3>
+        <div class="gauges">
+          <div class="g"><span>Reaktorleistung (Wärme)</span><b id="gP">100</b> <i>%</i></div>
+          <div class="g"><span>Freie Neutronen (relativ)</span><b id="gN">100</b> <i>%</i></div>
+          <div class="g"><span>Spaltungen im Kernausschnitt</span><b id="gF">0</b> <i>je 10 s</i></div>
+          <div class="g"><span id="gTl">Temperatur Primärkreislauf (Kernaustritt)</span><b id="gT">316</b> <i>°C</i></div>
+          <div class="g run" hidden style="grid-column:1/-1"><span>Im Durchgang erzeugte Wärmeenergie</span><b id="gE">0,0</b> <i>MWh · Modell: 100 % ≙ 3950 MW, 40 s ≙ 120 s Modellzeit</i></div>
+          <div class="g acc" hidden><span>Wärme aus Kernspaltung</span><b id="gPf">95</b> <i>%</i></div>
+          <div class="g acc" hidden><span>Nachzerfallswärme</span><b id="gD">5,0</b> <i>%</i></div>
+          <div class="g acc" hidden><span>Wasserstand im Reaktorkern</span><b id="gW">100</b> <i>%</i></div>
+          <div class="g acc" hidden><span>Kühlmittelstrom im Primärkreislauf</span><b id="gC">100</b> <i>%</i></div>
+        </div>
+        <p class="note">Modellhafte Werte. Zeitangaben sind Modellzeit: <span id="clock">0 s</span></p>
+      </div>
+      <div>
+        <h3 id="chartTitle">Verlauf der Reaktorleistung</h3>
+        <canvas id="chartP" aria-label="Zeitdiagramm der Reaktorleistung" role="img"></canvas>
+        <div id="chartTwrap" hidden>
+          <h3 style="margin-top:14px">Verlauf der Kerntemperatur</h3>
+          <canvas id="chartT" aria-label="Zeitdiagramm der Kerntemperatur" role="img"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lernmodus -->
+    <div class="sub" id="subLearn">
+      <h3>Beobachtungsaufträge</h3>
+      <ul class="abc">
+        <li><b>A</b><span>Markiere ein Neutron und verfolge es in der Lupenansicht. Was geschieht nacheinander mit ihm? Wiederhole das mit mehreren Neutronen.</span></li>
+        <li><b>B</b><span>Stelle nacheinander mindestens vier verschiedene Eintauchtiefen ein. Warte jeweils, bis sich die Anzeigen kaum noch ändern, und halte die Messwerte fest.</span></li>
+        <li><b>C</b><span>Verfolge in der Gesamtansicht den Weg vom Reaktorkern bis zum Generator. Was ändert sich unterwegs, wenn du die Steuerstäbe bewegst?</span></li>
+      </ul>
+      <div class="crow" style="margin:12px 0 8px">
+        <button type="button" class="btn primary" id="logBtn">Messwert festhalten</button>
+        <button type="button" class="btn" id="logClr">Tabelle leeren</button>
+      </div>
+      <div class="tscroll"><table id="logTbl" aria-label="Festgehaltene Messwerte">
+        <thead><tr><th>Nr.</th><th>Eintauchtiefe in %</th><th>Freie Neutronen (relativ) in %</th><th>Spaltungen je 10 s</th><th>Temperatur in °C</th><th>Reaktorleistung in %</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <!-- Schnellmodus -->
+    <div class="sub" id="subRun" hidden>
+      <h3>Bilanz des Durchgangs</h3>
+      <p class="note" style="font-size:15px">Der Betriebsbereich 90–110 % ist im Diagramm markiert. Er ist ein Zielbereich für dieses Modell, keine reale Sicherheitsgrenze.</p>
+      <div class="bilanz" id="bilanz" aria-live="polite">Noch kein Durchgang abgeschlossen.</div>
+      <ul class="abc" style="margin-top:14px">
+        <li><b>A</b><span>Beschreibe, wie du auf eine steigende und auf eine sinkende Leistung reagiert hast.</span></li>
+        <li><b>B</b><span>Wie schnell folgt die Leistung auf deine Eingriffe? Was bedeutet das für das Regeln?</span></li>
+      </ul>
+    </div>
+
+    <!-- Störfall -->
+    <div class="sub" id="subAcc" hidden>
+      <h3>Untersuchungsaufträge</h3>
+      <ul class="abc">
+        <li><b>A</b><span>Löse die Störung aus und greife zunächst nicht ein. Beobachte Kern, Anzeigen und Diagramme.</span></li>
+        <li><b>B</b><span>Wiederhole den Versuch und löse die Reaktorschnellabschaltung aus. Was ändert sich sofort – und was nicht?</span></li>
+        <li><b>C</b><span>Untersuche in weiteren Durchgängen, welche Eingriffe zu welchem Zeitpunkt nötig sind, damit der Kern unbeschädigt bleibt.</span></li>
+      </ul>
+      <h3 style="margin-top:16px">Ereignisprotokoll</h3>
+      <ol class="log" id="accLog" aria-live="polite"><li><time>–</time><span>Noch keine Störung ausgelöst.</span></li></ol>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-info" role="tabpanel" aria-labelledby="tab-3" tabindex="0" hidden>
+    <h2>Quellen und fachliche Grundlage</h2>
+    <p class="task">Diese Anwendung ist ein <strong>vereinfachtes physikalisches Modell</strong> für den Unterricht und keine technische Reaktorsimulation. Fachliche Aussagen und Orientierungswerte stammen aus den folgenden deutschsprachigen Quellen.</p>
+    <ul class="src">
+      <li>LEIFIphysik: <a href="https://www.leifiphysik.de/kern-teilchenphysik/kernspaltung-und-kernfusion/ausblick/druckwasserreaktor" rel="noopener">Druckwasserreaktor</a> – Aufbau, getrennte Kreisläufe, Wasser als Moderator und Kühlmittel; Orientierungswerte (Primärkreis ca. 158 bar, 288 °C am Kerneintritt, 316 °C am Kernaustritt, Dampf ca. 265 °C).</li>
+      <li>LEIFIphysik: <a href="https://www.leifiphysik.de/kern-teilchenphysik/kernspaltung-und-kernfusion/grundwissen/kettenreaktion" rel="noopener">Kettenreaktion</a> – Spaltung von U-235 durch langsame Neutronen, 2 bis 3 schnelle Neutronen je Spaltung, Abbremsen im Moderator, Steuerstäbe.</li>
+      <li>LEIFIphysik: <a href="https://www.leifiphysik.de/kern-teilchenphysik/kernspaltung-und-kernfusion/aufgabe/funktionsweise-eines-kernkraftwerks" rel="noopener">Funktionsweise eines Kernkraftwerks</a> – Energieumwandlung vom Reaktorkern bis zum Generator.</li>
+      <li>Gesellschaft für Anlagen- und Reaktorsicherheit (GRS), Glossar: <a href="https://www.grs.de/index.php/de/glossar/reaktorschnellabschaltung-resa" rel="noopener">Reaktorschnellabschaltung (RESA)</a> – Einfahren der Steuerstäbe in wenigen Sekunden, Auslösung von Hand oder durch das Reaktorschutzsystem, Turbinenschnellabschaltung.</li>
+      <li>GRS, Glossar: <a href="https://www.grs.de/de/glossar/nachzerfallswaermeleistung" rel="noopener">Nachzerfallswärmeleistung</a> – in den ersten Sekunden nach dem Abschalten etwa 5 % der thermischen Leistung, danach abklingend.</li>
+      <li>GRS, Glossar: <a href="https://www.grs.de/de/glossar/notkuehlung" rel="noopener">Notkühlung</a> – mehrfach vorhandene Systeme zur Abfuhr der Nachzerfallswärme.</li>
+      <li>Informationsportal von Bund und Ländern „Sicherheit in der Kerntechnik“: <a href="https://www.nuklearesicherheit.de/genehmigungs-und-aufsichtssystem/sicherheitskonzept/gestaffeltes-sicherheitskonzept/" rel="noopener">Gestaffeltes Sicherheitskonzept</a> – Barrieren, Kernkühlung, Sicherheitsbehälter.</li>
+    </ul>
+
+    <div class="sub">
+      <h3>Das Modell und seine Grenzen</h3>
+      <ul>
+        <li>Alle Anzeigen sind <strong>modellhafte Werte</strong>. 100 % steht für den Normalbetrieb des Modellreaktors.</li>
+        <li>Der Betriebsbereich 90–110 % ist ein Zielbereich für die Aufgaben, keine reale Sicherheitsgrenze.</li>
+        <li>Im Kern sind nur wenige U-235-Kerne und Neutronen stellvertretend für sehr viele gezeichnet. Die Bewegung ist extrem verlangsamt und die Anlage ist nicht maßstäblich.</li>
+        <li>Die Zeit ist Modellzeit. Im Schnellmodus und im Störfall läuft sie gerafft; ein realer Störfall verläuft über deutlich längere Zeiträume.</li>
+        <li>Die Energieangabe im Schnellmodus setzt 100 % mit 3950 MW Wärmeleistung gleich (Orientierungswert aus der LEIFIphysik-Seite zum Druckwasserreaktor) und rechnet mit der Modellzeit.</li>
+        <li>Die Schwankungen im Schnellmodus sind vorgegeben, damit geregelt werden muss. In realen Druckwasserreaktoren wird die Leistung zusätzlich über Borsäure im Kühlwasser eingestellt.</li>
+        <li>Im Störfall greift das Reaktorschutzsystem im Modell erst spät von selbst ein, damit eigene Eingriffe möglich sind. Reale Anlagen schalten automatisch und früher ab und besitzen mehrere voneinander unabhängige Notkühlsysteme.</li>
+        <li>Die Temperaturschwellen der Warnstufen (330 °C, 346 °C, 1200 °C, 2200 °C) sind für das Modell gewählt.</li>
+        <li>Der dargestellte Störfall ist ein erfundenes Lernszenario für einen Druckwasserreaktor und bildet kein reales Ereignis nach.</li>
+      </ul>
+      <details>
+        <summary>Fachliche Hinweise zum Vergleichen (erst nach dem Experimentieren öffnen)</summary>
+        <ul>
+          <li>Wasser dient im Druckwasserreaktor als Moderator und als Kühlmittel.</li>
+          <li>Der Primärkreislauf steht unter hohem Druck; das Wasser siedet dort im Normalbetrieb nicht.</li>
+          <li>Primär- und Sekundärkreislauf sind voneinander getrennt.</li>
+          <li>Steuerstäbe absorbieren Neutronen.</li>
+          <li>Ein kontrollierter Reaktorbetrieb erfordert eine näherungsweise konstante Spaltungsrate.</li>
+          <li>Eine vollständige Reaktorabschaltung beendet die sich selbst erhaltende Kettenreaktion, aber nicht sofort die Wärmeproduktion.</li>
+          <li>Die Nachzerfallswärme macht weitere Kühlung erforderlich.</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>Physiklabor · Kernreaktor: Kettenreaktion kontrollieren · vereinfachtes Modell mit modellhaften Werten</span>
+  <button type="button" class="btn" id="printBtn">Messwerte drucken</button>
+</footer>
+
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const NS='http://www.w3.org/2000/svg';
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const fmt=(v,d)=>v.toFixed(d||0).replace('.',',');
+
+/* ---------- Geometrie ---------- */
+const CORE={x0:225,x1:415,y0:425,y1:600};
+const SLOT=(CORE.x1-CORE.x0)/15;
+const slotX=i=>CORE.x0+SLOT*(i+0.5);
+const FUEL=[0,2,4,6,8,10,12,14], RODS=[3,7,11], WATER=[1,5,9,13];
+const ROD_W=7.5, ROD_LEN=178;
+
+/* ---------- Modellkonstanten (modellhafte Werte) ---------- */
+const SPEED=[1,3,2];           // Zeitraffer je Modus
+const GAMMA=[1,0.5,1];         // Rückkopplung
+const A_ROD=1.2, TAU_N=4, TAU_P=1.5;
+const F0=100/28, HS=100/23, CK0=10.7, CS=14, T_SEC=265;
+const T_WARN=330, T_AUTO=340, T_BOIL=346, T_DMG=1200, T_MELT=2200;
+const RUN_LEN=120;             // Modellsekunden = 40 s Echtzeit
+const P_NOM_MW=3950;           // 100 % entspricht im Modell 3950 MW Wärmeleistung (Orientierungswert LEIFIphysik, Isar 2)
+const NVIS=0.16;               // sichtbare Neutronen je % relativer Neutronenzahl
+const FISS_K=0.21;            // Spaltungen je 10 s Modellzeit je % (auf das Teilchenbild abgestimmt)
+
+let S, mode=0, running=true;
+function initState(){
+  S={t:0,d:50,dSet:50,n:100,Pf:95,Df:2,Ds:3,Tk:316,Tc:288,W:100,pump:1,fail:false,failT:0,em:false,
+     scram:false,rhoD:0,stage:0,stageMax:0,melt:0,omega:1,hs:100,
+     run:null,hist:[],histT:0,events:{},boilSeen:false};
+}
+function rhoRod(d){const x=(50-d)/50;return x>=0?A_ROD*x:A_ROD*x*(1+1.5*x*x);}
+
+/* reproduzierbare Störungen im Schnellmodus */
+function prng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+function scram(auto,why){
+  if(S.scram)return;
+  S.scram=true;S.dSet=100;
+  $('rod').value=100;$('rod').disabled=true;$('rodMinus').disabled=true;$('rodPlus').disabled=true;$('scramBtn').disabled=true;
+  showRod();
+  if(mode===2)logEvent(auto?'Reaktorschutz löst die Schnellabschaltung automatisch aus ('+why+').':'Reaktorschnellabschaltung von Hand ausgelöst.');
+  if(mode===1&&S.run&&!S.run.done){S.run.scram=true;endRun();}
+}
+
+function stepModel(h){
+  S.t+=h;
+  const g=GAMMA[mode];
+  // Steuerstäbe fahren
+  const rate=(S.scram?85:30)*h, dd=S.dSet-S.d;
+  S.d+=clamp(dd,-rate,rate);
+  // Störungen (Schnellmodus)
+  if(S.run&&!S.run.done){
+    const r=S.run;
+    if(S.t>=r.next){let v;do{v=(r.rand()*2-1)*0.2;}while(Math.abs(v-r.target)<0.12);r.target=v;r.next=S.t+15+r.rand()*9;}
+    S.rhoD+=clamp(r.target-S.rhoD,-0.08*h,0.08*h);
+  }
+  // Neutronen
+  const rho=rhoRod(S.d)+S.rhoD-g*(S.n/100-1);
+  S.n=Math.max(0,S.n+(rho*S.n/TAU_N+0.02)*h);
+  // Wärme
+  S.Pf+=(0.95*S.n-S.Pf)/TAU_P*h;
+  const base=S.Pf/0.95, tf=0.02*base, ts=0.03*base;
+  S.Df+=(tf-S.Df)/(tf>S.Df?5:40)*h;
+  S.Ds+=(ts-S.Ds)/(ts>S.Ds?15:(mode===2?1500:60))*h;
+  const Q=S.Pf+S.Df+S.Ds; S.Q=Q;
+  // Kühlung
+  if(S.fail)S.pump=Math.max(0,S.pump-h/6);
+  const c=Math.min(1,S.pump+(S.em?0.3:0)); S.c=c;
+  const xfer=Math.min(F0*c*(S.Tk-S.Tc),260);
+  const net=Q-xfer;
+  const acc=S.fail;
+  if(acc&&S.Tk>=T_BOIL&&S.W>0&&net>0){S.W=Math.max(0,S.W-0.62*Math.min(net,6)*h);S.Tk+=0.15*Math.min(net,12)/CK0*h;}
+  else{const ce=CK0*(0.03+0.97*S.W/100);S.Tk+=net/ce*h;}
+  if(S.em&&S.W<100)S.W=Math.min(100,S.W+5*h);
+  S.Tk=clamp(S.Tk,T_SEC,2800);
+  S.hs=HS*Math.max(0,S.Tc-T_SEC);
+  S.Tc+=(xfer-S.hs)/CS*h;
+  // Turbine
+  const tgt=S.scram?0:S.hs/100;
+  S.omega+=(tgt-S.omega)/3*h;
+  // Reaktorschutz
+  if(mode>=1&&!S.scram){
+    if(S.Tk>=T_AUTO)scram(true,'Temperatur zu hoch');
+    else if(mode===1&&Q>150)scram(true,'Leistung über 150 %');
+  }
+  // Warnstufen
+  let cur=S.Tk>=T_MELT?4:S.Tk>=T_DMG?3:(acc&&(S.Tk>=T_BOIL||S.W<99))?2:S.Tk>=T_WARN?1:0;
+  if(cur>=3)S.stageMax=Math.max(S.stageMax,cur);
+  const st=Math.max(cur,S.stageMax>=3?S.stageMax:0);
+  if(st!==S.stage){S.stage=st;if(mode===2)stageEvent(st);}
+  if(S.Tk>=T_MELT)S.melt=Math.max(S.melt,clamp((S.Tk-T_MELT)/400,0.05,1));
+  if(mode===2&&S.fail){
+    if(!S.events.dry&&S.W<=0){S.events.dry=1;logEvent('Der Reaktorkern liegt trocken.');}
+    if(!S.events.safe&&S.scram&&S.em&&S.W>=100&&S.Tk<320&&S.t-S.failT>20){S.events.safe=1;logEvent(S.stageMax>=3?'Kern wird wieder gekühlt, die Temperatur sinkt. Die Schäden am Kern bleiben bestehen.':'Kern wird gekühlt, die Temperatur sinkt. Der Kern ist unbeschädigt.');}
+  }
+  // Durchgangsstatistik
+  if(S.run&&!S.run.done){
+    const r=S.run;r.tot+=h;r.E+=Q/100*P_NOM_MW*h/3600;if(Q>=90&&Q<=110)r.inb+=h;r.max=Math.max(r.max,Q);r.min=Math.min(r.min,Q);
+    if(S.t-r.t0>=RUN_LEN)endRun();
+  }
+  // Verlauf
+  if(S.t-S.histT>=0.5){S.histT=S.t;S.hist.push([S.t,Q,S.Tk]);const win=[120,150,300][mode];while(S.hist.length&&S.hist[0][0]<S.t-win)S.hist.shift();}
+}
+
+/* ---------- Szene aufbauen ---------- */
+const pipes=[];
+function pipe(d,col,w,dash,speedFn,dot){
+  const g=$('pipes');
+  el('path',{d:d,fill:'none',stroke:col,'stroke-width':w,'stroke-linejoin':'round'},g);
+  const base=g.lastChild;
+  const f=el('path',{d:d,fill:'none',stroke:dot||'#fff','stroke-opacity':dot?0.9:0.6,'stroke-width':dot?w*0.45:w*0.3,'stroke-dasharray':dash,'stroke-linecap':'round'},g);
+  const p={base:base,f:f,off:0,speed:speedFn};pipes.push(p);return p;
+}
+const pHot=pipe('M440,385 H520','#aa481f',12,'7 15',()=>70*S.c);
+const pCold=pipe('M620,425 V615 H440','#396f8b',12,'7 15',()=>70*S.c);
+pipe('M585,110 V95 H840 V200','#9dbbb0',10,'1 11',()=>130*S.hs/100,'#176958');
+pipe('M920,282 V345','#9dbbb0',14,'1 11',()=>90*S.hs/100,'#176958');
+pipe('M870,435 V520 H702 V300 H650','#176958',10,'7 15',()=>60*S.hs/100);
+pipe('M960,372 H1080 V470 H1150','#8a9aa6',8,'6 14',()=>50);
+pipe('M1136,640 H1040 V410 H960','#8a9aa6',8,'6 14',()=>50);
+
+// Pumpen
+function pumpSym(x,y,r,col){
+  const g=el('g',{},$('pumpG'));
+  el('circle',{cx:x,cy:y,r:r,fill:'#fff',stroke:'#5e6b66','stroke-width':4},g);
+  const rot=el('g',{},g);
+  for(let i=0;i<3;i++){const a=i*2*Math.PI/3;el('line',{x1:x,y1:y,x2:x+Math.cos(a)*(r-5),y2:y+Math.sin(a)*(r-5),stroke:col,'stroke-width':4,'stroke-linecap':'round'},rot);}
+  return {rot:rot,x:x,y:y,a:0};
+}
+const pump1=pumpSym(531,615,20,'#396f8b'), pump2=pumpSym(812,520,16,'#176958');
+
+// Brennstäbe und Kerne
+const nuclei=[], fuelEls=[];
+FUEL.forEach(s=>{
+  const x=slotX(s);
+  fuelEls.push(el('rect',{x:x-4.5,y:CORE.y0+2,width:9,height:CORE.y1-CORE.y0-4,rx:3,fill:'#e2d59c',stroke:'#b9a85e','stroke-width':0.8},$('fuelG')));
+  for(let j=0;j<7;j++){const y=CORE.y0+13+j*25;const c=el('circle',{cx:x,cy:y,r:3.4,fill:'#8a7a2e'},$('fuelG'));nuclei.push({x:x,y:y,el:c,cool:0});}
+});
+// Steuerstäbe + Antriebe
+const rodEls=[];
+RODS.forEach(s=>{
+  const x=slotX(s);
+  el('rect',{x:x-6,y:176,width:12,height:30,rx:2,fill:'#cfd4cd',stroke:'#5e6b66','stroke-width':1.5},$('driveG'));
+  const g=el('g',{},$('rodG'));
+  el('line',{x1:x,y1:-400,x2:x,y2:-ROD_LEN,stroke:'#5e6b66','stroke-width':2},g);
+  el('rect',{x:x-ROD_W/2,y:-ROD_LEN,width:ROD_W,height:ROD_LEN,rx:2,fill:'#3f4a48'},g);
+  rodEls.push({g:g,x:x});
+});
+const tipY=()=>CORE.y0+S.d/100*(CORE.y1-CORE.y0);
+
+// Turbinenschaufeln
+const blades=[];
+for(let i=0;i<6;i++){const x=833+i*20,h=14+i*5.2;blades.push({l:el('line',{x1:x,x2:x,y1:230-h,y2:230+h,stroke:'#176958','stroke-width':5,'stroke-linecap':'round'},$('bladeG')),h:h,ph:i*0.9});}
+let theta=0;
+// Blasen (nur Sekundärseite des Dampferzeugers; im Störfall auch im Kern)
+const sgB=[];for(let i=0;i<12;i++)sgB.push({el:el('circle',{r:2.5,fill:'#fff','fill-opacity':0.85},$('sgBub')),x:526+Math.random()*118,p:Math.random()});
+const vB=[];for(let i=0;i<10;i++)vB.push({el:el('circle',{r:3,fill:'#fff','fill-opacity':0.8,visibility:'hidden'},$('vBub')),x:230+Math.random()*180,p:Math.random()});
+const plume=[];for(let i=0;i<6;i++)plume.push({el:el('circle',{r:16,fill:'#dfe3de'},$('plumeG')),p:i/6});
+// radioaktive Stoffe (schematisch)
+const rad=[];for(let i=0;i<18;i++)rad.push({el:el('circle',{r:3,fill:'#6b3f7a',visibility:'hidden'},$('radG')),x:320,y:300,vx:0,vy:0,on:false});
+function inContain(x,y){if(x<48||x>712||y>655)return false;if(y<270){const a=(x-380)/332,b=(y-270)/217;return a*a+b*b<1;}return true;}
+
+/* ---------- Teilchenebene ---------- */
+const NMAX=72, neutrons=[], fx=[];
+for(let i=0;i<NMAX;i++)neutrons.push({el:el('circle',{r:2.9,visibility:'hidden'},$('nG')),alive:false});
+for(let i=0;i<40;i++)fx.push({el:el('circle',{r:1,fill:'none',visibility:'hidden'},$('fxG')),on:false});
+let ctlI=0, seedT=0, marked=null, markWait=0, fissCount=0;
+function countAlive(){let c=0;for(const n of neutrons)if(n.alive)c++;return c;}
+function addFx(type,x,y,vx,vy){
+  const f=fx.find(q=>!q.on);if(!f)return;
+  f.on=true;f.type=type;f.x=x;f.y=y;f.vx=vx||0;f.vy=vy||0;f.t=0;f.dur={flash:0.7,frag:0.9,mod:0.5,abs:0.6}[type];
+  const e=f.el;e.setAttribute('visibility','visible');
+  if(type==='flash'){e.setAttribute('fill','none');e.setAttribute('stroke','#e0a01c');e.setAttribute('stroke-width',2.5);}
+  else if(type==='frag'){e.setAttribute('fill','#5b4a1e');e.setAttribute('stroke','none');e.setAttribute('r',2.3);}
+  else if(type==='mod'){e.setAttribute('fill','none');e.setAttribute('stroke','#5f9bc0');e.setAttribute('stroke-width',1.5);}
+  else{e.setAttribute('fill','none');e.setAttribute('stroke','#1b2221');e.setAttribute('stroke-width',2);}
+}
+function rodHit(x,y){const ty=tipY();if(y>ty||y<CORE.y0-4||S.d<1)return false;for(const r of rodEls)if(Math.abs(x-r.x)<ROD_W/2+1.5)return true;return false;}
+function segCrossRod(x0,y0,x1,y1){for(let k=1;k<=10;k++){const u=k/10;if(rodHit(x0+(x1-x0)*u,y0+(y1-y0)*u))return true;}return false;}
+function spawn(x,y){
+  const n=neutrons.find(q=>!q.alive);if(!n)return null;
+  let tx,ty,tries=0;
+  do{
+    const gaps=[];for(let k=0;k<=15;k++)gaps.push(CORE.x0+SLOT*k);WATER.forEach(s=>gaps.push(slotX(s)));
+    const cand=gaps.filter(gx=>Math.abs(gx-x)>10&&Math.abs(gx-x)<85&&gx>CORE.x0+2&&gx<CORE.x1-2);
+    tx=cand[Math.floor(Math.random()*cand.length)];
+    ty=clamp(y+(Math.random()*2-1)*60,CORE.y0+6,CORE.y1-6);
+  }while(++tries<10&&segCrossRod(x,y,tx,ty));
+  n.alive=true;n.phase=0;n.x=x;n.y=y;n.tx=tx;n.ty=ty;n.fate=null;n.fade=1;
+  n.el.setAttribute('fill','#e0701c');n.el.setAttribute('visibility','visible');n.el.setAttribute('opacity',1);
+  if($('markChk').checked&&!marked&&markWait<=0){marked=n;setMark('Markiertes Neutron: schnell – gerade freigesetzt');}
+  return n;
+}
+function setMark(t){$('markState').textContent=t;}
+function kill(n,why){
+  n.alive=false;n.el.setAttribute('visibility','hidden');
+  if(marked===n){marked=null;markWait=2.5;setMark('Markiertes Neutron: '+why);$('markRing').setAttribute('visibility','hidden');}
+}
+function decideFate(n){
+  const Nt=S.n*NVIS, cnt=countAlive(), e=(Nt-cnt)/Math.max(Nt,5);
+  const pf=clamp(0.42+0.9*e+ctlI,0.02,0.92);
+  const act=nuclei.filter(q=>q.cool<=0);
+  if(Math.random()<pf&&act.length){
+    let best=null;
+    for(let k=0;k<8;k++){const q=act[Math.floor(Math.random()*act.length)];const dist=Math.hypot(q.x-n.x,q.y-n.y);if(dist>30&&dist<150&&!segCrossRod(n.x,n.y,q.x,q.y)){best=q;break;}}
+    if(best){n.fate='fiss';n.target=best;n.tx=best.x;n.ty=best.y;best.cool=0.01;return;}
+  }
+  if(S.d>3&&Math.random()<0.25+0.6*S.d/100){
+    const r=rodEls.slice().sort((a,b)=>Math.abs(a.x-n.x)-Math.abs(b.x-n.x))[Math.random()<0.7?0:1];
+    n.fate='rod';n.tx=r.x;n.ty=CORE.y0+Math.random()*(tipY()-CORE.y0);return;
+  }
+  n.fate='lost';const a=Math.random()*2*Math.PI,L=50+Math.random()*60;
+  n.tx=n.x+Math.cos(a)*L;n.ty=n.y+Math.sin(a)*L;
+}
+function fission(n){
+  const q=n.target;q.cool=2;fissCount++;
+  addFx('flash',q.x,q.y);
+  const a=Math.random()*Math.PI;addFx('frag',q.x,q.y,Math.cos(a)*14,Math.sin(a)*14);addFx('frag',q.x,q.y,-Math.cos(a)*14,-Math.sin(a)*14);
+  const wasMarked=marked===n;
+  kill(n,'hat einen U-235-Kern gespalten');
+  const nu=Math.random()<0.5?2:3;for(let i=0;i<nu;i++)spawn(q.x,q.y);
+  return wasMarked;
+}
+function stepViz(h){
+  const Nt=S.n*NVIS, cnt=countAlive(), e=(Nt-cnt)/Math.max(Nt,5);
+  ctlI=clamp(ctlI+e*h*0.15,-0.3,0.35);
+  if(markWait>0){markWait-=h;if(markWait<=0&&!marked)setMark($('markChk').checked?'Markiertes Neutron: warte auf das nächste Neutron …':'');}
+  // Quellneutronen, wenn zu wenige unterwegs sind
+  seedT-=h;
+  if(seedT<=0&&Nt>=0.6&&cnt<Nt*0.6-0.4){const q=nuclei[Math.floor(Math.random()*nuclei.length)];spawn(q.x,q.y);seedT=cnt===0?0.5:1.2;}
+  for(const q of nuclei){if(q.cool>0){q.cool-=h;q.el.setAttribute('opacity',q.cool>0.02?0.25:1);}}
+  for(const n of neutrons){
+    if(!n.alive)continue;
+    const v=n.phase===0?120:30;
+    const dx=n.tx-n.x,dy=n.ty-n.y,dist=Math.hypot(dx,dy),stp=v*h;
+    if(n.phase===1&&rodHit(n.x,n.y)){addFx('abs',n.x,n.y);kill(n,'in einem Steuerstab absorbiert');continue;}
+    if(dist<=stp){
+      n.x=n.tx;n.y=n.ty;
+      if(n.phase===0){n.phase=1;n.el.setAttribute('fill','#1f4f7a');addFx('mod',n.x,n.y);decideFate(n);if(marked===n)setMark('Markiertes Neutron: im Wasser abgebremst – jetzt langsam');}
+      else if(n.fate==='fiss'){fission(n);continue;}
+      else if(n.fate==='rod'){if(rodHit(n.x,n.y)){addFx('abs',n.x,n.y);kill(n,'in einem Steuerstab absorbiert');}else{n.fate='lost';n.tx=n.x+(Math.random()-0.5)*60;n.ty=n.y+40;}continue;}
+      else{kill(n,'verloren gegangen (kein Kern getroffen)');continue;}
+    }else{n.x+=dx/dist*stp;n.y+=dy/dist*stp;}
+    if(n.phase===1&&n.fate==='lost'){n.el.setAttribute('opacity',clamp(dist/25,0,1));}
+    if(n.x<CORE.x0-14||n.x>CORE.x1+14||n.y<CORE.y0-14||n.y>CORE.y1+14){kill(n,'hat den Kern verlassen');continue;}
+    n.el.setAttribute('cx',n.x.toFixed(1));n.el.setAttribute('cy',n.y.toFixed(1));
+  }
+  if(marked){const r=$('markRing');r.setAttribute('visibility','visible');r.setAttribute('cx',marked.x.toFixed(1));r.setAttribute('cy',marked.y.toFixed(1));}
+  for(const f of fx){
+    if(!f.on)continue;f.t+=h;const u=f.t/f.dur;
+    if(u>=1){f.on=false;f.el.setAttribute('visibility','hidden');continue;}
+    f.x+=f.vx*h;f.y+=f.vy*h;
+    f.el.setAttribute('cx',f.x.toFixed(1));f.el.setAttribute('cy',f.y.toFixed(1));f.el.setAttribute('opacity',(1-u).toFixed(2));
+    if(f.type==='flash')f.el.setAttribute('r',(4+14*u).toFixed(1));
+    else if(f.type==='mod')f.el.setAttribute('r',(3+6*u).toFixed(1));
+    else if(f.type==='abs')f.el.setAttribute('r',(5-3*u).toFixed(1));
+  }
+  // Anlage
+  theta+=S.omega*7*h;
+  pump1.a+=S.pump*300*h;pump2.a+=S.hs/100*300*h;
+  for(const p of pipes){p.off-=p.speed()*h;}
+  const boil=S.hs/100;
+  for(const b of sgB){b.p+=h*(0.25+0.5*boil);if(b.p>1){b.p=0;b.x=526+Math.random()*118;}}
+  const vboil=S.fail&&S.Tk>=T_BOIL&&S.W>0;
+  for(const b of vB){b.on=vboil;if(vboil){b.p+=h*0.6;if(b.p>1){b.p=0;b.x=230+Math.random()*180;}}}
+  for(const p of plume){p.p+=h*0.12;if(p.p>1)p.p-=1;}
+  if(S.stageMax>=3){
+    for(const r of rad){
+      if(!r.on){if(Math.random()<h*0.5){r.on=true;r.x=260+Math.random()*120;r.y=240;r.vx=(Math.random()-0.5)*30;r.vy=-20-Math.random()*20;}continue;}
+      r.vx+=(Math.random()-0.5)*40*h;r.vy+=(Math.random()-0.5)*40*h;r.vx=clamp(r.vx,-28,28);r.vy=clamp(r.vy,-28,28);
+      const nx=r.x+r.vx*h,ny=r.y+r.vy*h;
+      if(inContain(nx,ny)){r.x=nx;r.y=ny;}else{r.vx=-r.vx;r.vy=-r.vy;}
+    }
+  }
+}
+
+/* ---------- Darstellung ---------- */
+const TC=[[265,[57,111,139]],[295,[128,116,122]],[318,[170,72,31]],[600,[196,52,28]],[1500,[222,62,22]],[2400,[240,150,50]]];
+function tcol(T,pale){
+  let c;if(T<=TC[0][0])c=TC[0][1];else if(T>=TC[5][0])c=TC[5][1];else{for(let i=1;i<TC.length;i++){if(T<=TC[i][0]){const a=TC[i-1],b=TC[i],u=(T-a[0])/(b[0]-a[0]);c=a[1].map((v,k)=>v+(b[1][k]-v)*u);break;}}}
+  if(pale)c=c.map(v=>v+(255-v)*pale);
+  return 'rgb('+c.map(v=>Math.round(v)).join(',')+')';
+}
+let lastTxt=0;
+function render(now){
+  const ty=tipY();
+  for(const r of rodEls)r.g.setAttribute('transform','translate(0,'+ty.toFixed(1)+')');
+  const hot=tcol(S.Tk),cold=tcol(S.Tc);
+  pHot.base.setAttribute('stroke',hot);pCold.base.setAttribute('stroke',cold);
+  $('chHot').setAttribute('fill',hot);$('chCold').setAttribute('fill',cold);$('tg0').setAttribute('stop-color',hot);$('tg1').setAttribute('stop-color',cold);
+  $('przLine').setAttribute('stroke',hot);$('przWater').setAttribute('fill',tcol(S.Tk,0.45));
+  const hp=tcol(S.Tk,0.72),cp=tcol(S.Tc,0.72);
+  $('waterTop').setAttribute('fill',hp);$('wg0').setAttribute('stop-color',hp);$('wg1').setAttribute('stop-color',cp);$('waterBot').setAttribute('fill',cp);
+  $('steamCover').setAttribute('height',((1-S.W/100)*(CORE.y1-200)).toFixed(1));
+  // Brennstäbe
+  let fr=[226,213,156];const pw=clamp(S.Pf/200,0,1);fr=[226+12*pw,213-55*pw,156-80*pw];
+  if(S.Tk>420){const u=clamp((S.Tk-420)/900,0,1);fr=[fr[0]+(205-fr[0])*u,fr[1]+(48-fr[1])*u,fr[2]+(28-fr[2])*u];}
+  const fc='rgb('+fr.map(v=>Math.round(v)).join(',')+')';
+  for(const f of fuelEls)f.setAttribute('fill',fc);
+  $('fuelG').setAttribute('opacity',(1-0.75*S.melt).toFixed(2));
+  $('melt').setAttribute('rx',(95*S.melt).toFixed(1));$('melt').setAttribute('ry',(16*S.melt).toFixed(1));
+  for(const p of pipes)p.f.setAttribute('stroke-dashoffset',p.off.toFixed(1));
+  pump1.rot.setAttribute('transform','rotate('+(pump1.a%360).toFixed(1)+' '+pump1.x+' '+pump1.y+')');
+  pump2.rot.setAttribute('transform','rotate('+(pump2.a%360).toFixed(1)+' '+pump2.x+' '+pump2.y+')');
+  for(const b of blades){const h=b.h*Math.cos(theta+b.ph);b.l.setAttribute('y1',(230-h).toFixed(1));b.l.setAttribute('y2',(230+h).toFixed(1));}
+  $('genRot').setAttribute('transform','rotate('+((theta*57.3)%360).toFixed(1)+' 1050 230)');
+  const boil=clamp(S.hs/100,0,1.5);
+  for(const b of sgB){b.el.setAttribute('cx',b.x.toFixed(1));b.el.setAttribute('cy',(368-b.p*163).toFixed(1));b.el.setAttribute('opacity',(boil>0.03?Math.min(1,boil)*(1-b.p*0.5):0).toFixed(2));}
+  const lvl=250+(1-S.W/100)*350;
+  for(const b of vB){b.el.setAttribute('visibility',b.on?'visible':'hidden');if(b.on){b.el.setAttribute('cx',b.x.toFixed(1));b.el.setAttribute('cy',(598-b.p*(598-lvl)).toFixed(1));}}
+  for(const p of plume){p.el.setAttribute('cx',(1193+Math.sin(p.p*9)*10+p.p*18).toFixed(1));p.el.setAttribute('cy',(392-p.p*90).toFixed(1));p.el.setAttribute('r',(13+p.p*14).toFixed(1));p.el.setAttribute('opacity',(clamp(S.hs/100,0,1)*0.8*(1-p.p)).toFixed(2));}
+  for(const r of rad){r.el.setAttribute('visibility',r.on?'visible':'hidden');if(r.on){r.el.setAttribute('cx',r.x.toFixed(1));r.el.setAttribute('cy',r.y.toFixed(1));}}
+  $('contain').setAttribute('stroke',S.stageMax>=3?'#5d625c':'#8b9089');
+  $('legRad').hidden=S.stageMax<3;
+  if(now-lastTxt>180){lastTxt=now;renderText();drawCharts();}
+}
+function renderText(){
+  const Q=S.Q==null?100:S.Q;
+  $('tHot').textContent=fmt(S.Tk)+' °C';$('tCold').textContent=fmt(S.Tc)+' °C';
+  $('genOut').textContent=fmt(S.scram?0:S.hs*clamp(S.omega*1.2,0,1))+' %';
+  $('gP').textContent=fmt(Q,Q<20?1:0);$('gN').textContent=fmt(S.n,S.n<10?1:0);$('gF').textContent=fmt(S.n*FISS_K);
+  $('gT').textContent=fmt(S.Tk);$('gPf').textContent=fmt(S.Pf,S.Pf<10?1:0);$('gD').textContent=fmt(S.Df+S.Ds,1);$('gW').textContent=fmt(S.W);$('gC').textContent=fmt((S.c==null?1:S.c)*100);
+  $('pBig').textContent=fmt(Q,Q<20?1:0)+' %';
+  const inb=Q>=90&&Q<=110;$('pBand').textContent='Reaktorleistung – '+(inb?'im Betriebsbereich':Q>110?'über dem Betriebsbereich':'unter dem Betriebsbereich');
+  $('pread').classList.toggle('out',!inb);
+  $('clock').textContent=fmt(S.t)+' s';
+  if(mode===1&&S.run&&!S.run.done){$('runInfo').textContent='Durchgang läuft – noch '+Math.ceil((RUN_LEN-(S.t-S.run.t0))/3)+' s';$('gE').textContent=fmt(S.run.E,1);}
+  if(mode===2){const st=Math.min(S.stage,3);[...$('steps').children].forEach((li,i)=>{li.classList.toggle('on',i===st);});$('steps').children[0].textContent=S.scram?'Abgeschaltet, Temperatur normal':'Normalbetrieb';$('steps').children[3].textContent=S.stageMax>=4?'Kernschädigung: Kernschmelze':'Kernschädigung';}
+}
+function showRod(){$('rodOut').textContent=$('rod').value+' %';}
+
+/* ---------- Diagramme ---------- */
+function drawChart(cv,idx,ymin,ymax,unit,ticks,band,lines,col){
+  const dpr=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;if(!w)return;
+  if(cv.width!==Math.round(w*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
+  const L=46,R=10,T=24,B=40,pw=w-L-R,ph=h-T-B,win=[120,150,300][mode];
+  const t1=Math.max(S.t,win),t0=t1-win;
+  const X=t=>L+(t-t0)/win*pw,Y=v=>T+(1-(clamp(v,ymin,ymax)-ymin)/(ymax-ymin))*ph;
+  c.font='12.5px Arial';c.textBaseline='middle';
+  if(band){c.fillStyle='#dcebe3';c.fillRect(L,Y(band[1]),pw,Y(band[0])-Y(band[1]));c.fillStyle='#176958';c.textAlign='right';c.fillText('Betriebsbereich 90–110 %',L+pw-4,Y(band[1])-9);}
+  c.strokeStyle='#d5ded4';c.lineWidth=1;c.fillStyle='#586b62';c.textAlign='right';
+  ticks.forEach(v=>{c.beginPath();c.moveTo(L,Y(v));c.lineTo(L+pw,Y(v));c.stroke();c.fillText(v,L-6,Y(v));});
+  (lines||[]).forEach(l=>{c.strokeStyle='#aa481f';c.setLineDash([5,4]);c.beginPath();c.moveTo(L,Y(l[0]));c.lineTo(L+pw,Y(l[0]));c.stroke();c.setLineDash([]);c.fillStyle='#aa481f';c.textAlign='left';c.fillText(l[1],L+6,Y(l[0])-9);});
+  c.fillStyle='#586b62';c.textAlign='center';c.textBaseline='alphabetic';
+  const stepT=win/5;for(let t=Math.ceil(t0/stepT)*stepT;t<=t1;t+=stepT)c.fillText(t.toFixed(0),X(t),h-24);
+  c.fillText('Modellzeit in s',L+pw/2,h-6);c.textAlign='left';c.fillText(unit,4,10);
+  c.strokeStyle='#203d36';c.lineWidth=1;c.strokeRect(L,T,pw,ph);
+  c.strokeStyle=col;c.lineWidth=2.4;c.lineJoin='round';c.beginPath();
+  let first=true;for(const p of S.hist){if(p[0]<t0)continue;const x=X(p[0]),y=Y(p[idx]);if(first){c.moveTo(x,y);first=false;}else c.lineTo(x,y);}
+  c.stroke();
+}
+function drawCharts(){
+  if($('panel-sim').hidden)return;
+  const pm=[250,200,150][mode];
+  drawChart($('chartP'),1,0,pm,'%',pm===250?[0,50,100,150,200,250]:pm===200?[0,50,100,150,200]:[0,50,100,150],[90,110],null,'#176958');
+  if(mode===2)drawChart($('chartT'),2,200,2600,'°C',[200,800,1400,2000,2600],null,[[T_DMG,'Kernschädigung ab 1200 °C (Modell)'],[T_MELT,'Kernschmelze ab 2200 °C (Modell)']],'#aa481f');
+}
+
+/* ---------- Protokolle ---------- */
+function logEvent(txt){
+  const ol=$('accLog');if(!S.events.any){ol.innerHTML='';S.events.any=1;}
+  const li=document.createElement('li');const tm=document.createElement('time');tm.textContent=fmt(Math.max(0,S.t-S.failT))+' s';const sp=document.createElement('span');sp.textContent=txt;li.append(tm,sp);ol.appendChild(li);
+}
+function stageEvent(st){
+  if(st===1&&!S.events.w){S.events.w=1;logEvent('Warnung: Temperatur im Primärkreislauf über 330 °C.');}
+  if(st===2&&!S.events.c){S.events.c=1;logEvent('Kritischer Zustand: Wasser im Reaktordruckbehälter verdampft, der Wasserstand sinkt.');}
+  if(st===3&&!S.events.d){S.events.d=1;logEvent('Kernschädigung: Die Brennstäbe werden beschädigt. Das Containment hält freigesetzte Stoffe zurück.');}
+  if(st===4&&!S.events.m){S.events.m=1;logEvent('Kernschmelze: Brennstoff schmilzt und sammelt sich am Boden des Reaktordruckbehälters.');}
+}
+function endRun(){
+  const r=S.run;r.done=true;S.rhoD=0;
+  $('bilanz').textContent='Durchgang beendet nach '+fmt(r.tot/3)+' s. Im Betriebsbereich 90–110 %: '+fmt(100*r.inb/Math.max(r.tot,0.01))+' % der Zeit · erzeugte Wärmeenergie: '+fmt(r.E,1)+' MWh (bei durchgehend 100 % wären es '+fmt(P_NOM_MW*RUN_LEN/3600,1)+' MWh) · höchste Leistung: '+fmt(r.max)+' % · niedrigste Leistung: '+fmt(r.min)+' % · Schnellabschaltung durch den Reaktorschutz: '+(r.scram?'ja (Leistung oder Temperatur zu hoch)':'nein')+'.';
+  $('runInfo').textContent='Durchgang beendet – Bilanz siehe unten.';$('gE').textContent=fmt(r.E,1);$('runBtn').disabled=false;$('runBtn').textContent='Neuer Durchgang (40 s)';
+}
+
+/* ---------- Bedienung ---------- */
+const MODES=[
+ {title:'Lernmodus: Prozesse beobachten und untersuchen',task:'Die Vorgänge laufen hier bewusst langsam ab. Verändere die Eintauchtiefe der Steuerstäbe und beobachte, was im Reaktorkern, an den Anzeigen und in der übrigen Anlage geschieht.'},
+ {title:'Reaktor unter Kontrolle halten',task:'Hier läuft alles deutlich schneller, und die Zahl der Neutronen im Kern schwankt von selbst. Halte die Reaktorleistung während eines Durchgangs möglichst stabil im Betriebsbereich von 90 bis 110 %.'},
+ {title:'Störfall: Störung der Kühlung',task:'Der Reaktor läuft im Normalbetrieb. Löse die Störung aus und untersuche in mehreren Durchgängen, wie sich die Anlage mit und ohne deine Eingriffe verhält.'}
+];
+function resetSim(){
+  initState();
+  for(const n of neutrons){n.alive=false;n.el.setAttribute('visibility','hidden');}
+  for(const f of fx){f.on=false;f.el.setAttribute('visibility','hidden');}
+  for(const q of nuclei){q.cool=0;q.el.setAttribute('opacity',1);}
+  for(const r of rad)r.on=false;
+  marked=null;markWait=0;ctlI=0;seedT=0;$('markRing').setAttribute('visibility','hidden');setMark($('markChk').checked?'Markiertes Neutron: warte auf das nächste Neutron …':'');
+  for(let i=0;i<16;i++){const q=nuclei[Math.floor(Math.random()*nuclei.length)];const n=spawn(q.x,q.y);if(n){const u=Math.random();n.x+=(n.tx-n.x)*u;n.y+=(n.ty-n.y)*u;}}
+  $('rod').value=50;$('rod').disabled=false;$('rodMinus').disabled=false;$('rodPlus').disabled=false;showRod();
+  $('scramBtn').disabled=false;$('failBtn').disabled=false;$('emBtn').setAttribute('aria-pressed','false');$('emBtn').textContent='Notkühlung einschalten';
+  $('runBtn').disabled=false;$('runBtn').textContent='Durchgang starten (40 s)';$('runInfo').textContent='';$('gE').textContent='0,0';
+  $('accLog').innerHTML='<li><time>–</time><span>Noch keine Störung ausgelöst.</span></li>';
+  S.Q=100;S.c=1;renderText();
+}
+function setMode(m){
+  mode=m;
+  $('modeTitle').textContent=MODES[m].title;$('modeTask').textContent=MODES[m].task;
+  $('rowRun').hidden=m!==1;$('rowAcc').hidden=m!==2;
+  $('subLearn').hidden=m!==0;$('subRun').hidden=m!==1;$('subAcc').hidden=m!==2;
+  document.querySelectorAll('.g.acc').forEach(e=>e.hidden=m!==2);document.querySelectorAll('.g.run').forEach(e=>e.hidden=m!==1);
+  $('chartTwrap').hidden=m!==2;
+  $('gTl').textContent=m===2?'Kerntemperatur':'Temperatur Primärkreislauf (Kernaustritt)';
+  resetSim();
+}
+const tabs=[...document.querySelectorAll('.tab')];
+function selectTab(i,focus){
+  tabs.forEach((t,k)=>{t.setAttribute('aria-selected',k===i);t.tabIndex=k===i?0:-1;});
+  if(focus)tabs[i].focus();
+  $('panel-sim').hidden=i===3;$('panel-info').hidden=i!==3;
+  if(i<3){$('panel-sim').setAttribute('aria-labelledby','tab-'+i);setMode(i);}
+}
+tabs.forEach((t,i)=>{
+  t.addEventListener('click',()=>selectTab(i));
+  t.addEventListener('keydown',e=>{let k=-1;if(e.key==='ArrowRight')k=(i+1)%4;else if(e.key==='ArrowLeft')k=(i+3)%4;else if(e.key==='Home')k=0;else if(e.key==='End')k=3;if(k>=0){e.preventDefault();selectTab(k,true);}});
+});
+$('rod').addEventListener('input',()=>{if(!S.scram){S.dSet=+$('rod').value;showRod();}});
+function nudge(v){if(S.scram)return;const r=$('rod');r.value=clamp(+r.value+v,0,100);S.dSet=+r.value;showRod();}
+$('rodMinus').addEventListener('click',()=>nudge(-1));$('rodPlus').addEventListener('click',()=>nudge(1));
+function setRunning(v){running=v;$('pauseBtn').textContent=v?'Pause':'Weiter';}
+$('pauseBtn').addEventListener('click',()=>setRunning(!running));
+$('resetBtn').addEventListener('click',()=>{resetSim();});
+function setView(core){$('scene').setAttribute('viewBox',core?'62 160 384 512':'0 0 1280 700');$('scene').classList.toggle('core',core);$('viewCore').setAttribute('aria-pressed',core);$('viewPlant').setAttribute('aria-pressed',!core);}
+$('viewPlant').addEventListener('click',()=>setView(false));$('viewCore').addEventListener('click',()=>setView(true));
+$('markChk').addEventListener('change',()=>{if(!$('markChk').checked){marked=null;$('markRing').setAttribute('visibility','hidden');setMark('');}else setMark('Markiertes Neutron: warte auf das nächste Neutron …');});
+$('runBtn').addEventListener('click',()=>{
+  resetSim();S.run={t0:S.t,rand:prng(20241),target:0,next:S.t+9,tot:0,E:0,inb:0,max:100,min:100,done:false,scram:false};
+  $('runBtn').disabled=true;$('bilanz').textContent='Durchgang läuft …';setRunning(true);
+});
+$('failBtn').addEventListener('click',()=>{if(S.fail)return;S.fail=true;S.failT=S.t;$('failBtn').disabled=true;logEvent('Hauptkühlmittelpumpe fällt aus. Der Kühlmittelstrom im Primärkreislauf nimmt ab.');setRunning(true);});
+$('scramBtn').addEventListener('click',()=>scram(false));
+$('emBtn').addEventListener('click',()=>{S.em=!S.em;$('emBtn').setAttribute('aria-pressed',S.em);$('emBtn').textContent=S.em?'Notkühlung ausschalten':'Notkühlung einschalten';if(S.fail)logEvent(S.em?'Notkühlung eingeschaltet.':'Notkühlung ausgeschaltet.');});
+let logNo=0;
+$('logBtn').addEventListener('click',()=>{
+  const tr=document.createElement('tr');
+  [++logNo,fmt(S.d),fmt(S.n,S.n<10?1:0),fmt(S.n*FISS_K),fmt(S.Tk),fmt(S.Q,S.Q<20?1:0)].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td);});
+  $('logTbl').tBodies[0].appendChild(tr);
+});
+$('logClr').addEventListener('click',()=>{$('logTbl').tBodies[0].innerHTML='';logNo=0;});
+$('printBtn').addEventListener('click',()=>window.print());
+
+/* ---------- Schleife ---------- */
+let last=0;
+function frame(ts){
+  requestAnimationFrame(frame);
+  if(document.hidden){last=ts;return;}
+  const dt=Math.min(0.05,last?(ts-last)/1000:0);last=ts;
+  if(running&&!$('panel-sim').hidden){
+    const dtm=dt*SPEED[mode];let r=dtm;
+    while(r>1e-6){const h=Math.min(0.02,r);stepModel(h);r-=h;}
+    stepViz(dtm);
+  }
+  render(ts);
+}
+selectTab(0);
+if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)setRunning(false);
+window.addEventListener('resize',drawCharts);
+window.__sim={get S(){return S;},step(sec){let r=sec;while(r>1e-6){const h=Math.min(0.02,r);stepModel(h);r-=h;}},viz:stepViz,get fiss(){return fissCount;},alive:countAlive,get mode(){return mode;}};
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
